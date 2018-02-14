@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Script to build RISC-V ISA simulator, proxy kernel, and GNU toolchain.
+# Script to build RISC-V ISA simulator using Pulpino memory map & proxy kernel.
 # Tools will be installed to $RISCV.
 
 . build.common
@@ -28,20 +28,15 @@ mkdir -p "$PROJECT/build"
 cd "$PROJECT/build"
 
 echo "Configuring project $PROJECT"
-../configure --prefix=$RISCV --with-fesvr=$RISCV --with-isa=rv32ima --enable-pulpino > build.log
+../configure PROGRAM_SUFFIX=-pulp \
+  --prefix="$RISCV" --libdir="$RISCV/lib/spike-pulp" \
+  --with-fesvr=$RISCV --with-isa=rv32ima --enable-pulpino > build.log
 
 echo "Building project $PROJECT"
 $MAKE >> build.log \
 
 echo "Installing project $PROJECT"
-$MAKE install INSTALL_EXE="/usr/bin/install -c -m 755 --backup --suffix=-riscv" >> build.log
-
-for file in spike spike-dasm termios-xspike xspike; do
-  mv "$RISCV/bin/${file}" "$RISCV/bin/${file}-pulp" || exit $?
-  if [ -f "$RISCV/bin/${file}-riscv" ]; then
-    mv "$RISCV/bin/${file}-riscv" "$RISCV/bin/${file}" || exit $?
-  fi
-done
+$MAKE install >> build.log
 
 cd - > /dev/null
 
